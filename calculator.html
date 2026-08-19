@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Expense Calculator</title>
+    <style>
+       
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f7f6;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            color: #34495e;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        input[type="number"], input[type="text"] {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #27ae60;
+        }
+
+        .display-text {
+            font-weight: 600;
+            color: #7f8c8d;
+        }
+
+        .metrics {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .card {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            border-left: 5px solid #bdc3c7;
+        }
+
+        #savingsCard.positive { border-left-color: #2ecc71; color: #27ae60; }
+        #savingsCard.negative { border-left-color: #e74c3c; color: #c0392b; }
+
+        h3 {
+            margin: 15px 0 8px 0;
+            font-size: 1rem;
+            color: #7f8c8d;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            background: #fdfdfd;
+            padding: 10px;
+            border: 1px solid #f0f0f0;
+            margin-bottom: 6px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Personal Expense Calculator</h1>
+        
+        <!-- Income Section -->
+        <div class="section">
+            <h2>1. Monthly Income</h2>
+            <div class="input-group">
+                <input type="number" id="incomeInput" placeholder="Enter total income (e.g., 5000)">
+                <button onclick="setIncome()">Set Income</button>
+            </div>
+            <p class="display-text">Current Income: $<span id="incomeDisplay">0</span></p>
+        </div>
+
+        <!-- Expense Section -->
+        <div class="section">
+            <h2>2. Add Expense</h2>
+            <div class="input-group">
+                <input type="text" id="expenseName" placeholder="Expense description (e.g., Rent)">
+                <input type="number" id="expenseAmount" placeholder="Amount ($)">
+                <select id="expenseCategory">
+                    <option value="Food">Food</option>
+                    <option value="Rent">Rent</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Other">Other</option>
+                </select>
+                <button onclick="addExpense()">Add Expense</button>
+            </div>
+        </div>
+
+        <!-- Summary & Report Section -->
+        <div class="section report-section">
+            <h2>3. Summary Report</h2>
+            <div class="metrics">
+                <div class="card">Total Income: $<span id="totalIncomeCard">0</span></div>
+                <div class="card">Total Expenses: $<span id="totalExpensesCard">0</span></div>
+                <div class="card" id="savingsCard">Net Savings: $<span id="savingsCardValue">0</span></div>
+            </div>
+
+            <h3>Expense List</h3>
+            <ul id="expenseList">
+                <!-- Dynamically populated via JS -->
+            </ul>
+
+            <h3>Category Breakdown</h3>
+            <ul id="categoryBreakdown">
+                <!-- Dynamically populated via JS -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- --- JAVASCRIPT LOGIC --- -->
+    <script>
+        // 1. State Variables
+        let totalIncome = 0;
+        let expenses = []; // Array of objects holding each expense
+
+     
+        function setIncome() {
+            const incomeInput = document.getElementById('incomeInput');
+            const value = parseFloat(incomeInput.value);
+
+            // Conditional check for valid input
+            if (isNaN(value) || value < 0) {
+                alert("Please enter a valid positive income amount.");
+                return;
+            }
+
+            totalIncome = value;
+            incomeInput.value = '';
+            updateSummary();
+        }
+
+        function addExpense() {
+            const nameInput = document.getElementById('expenseName');
+            const amountInput = document.getElementById('expenseAmount');
+            const categoryInput = document.getElementById('expenseCategory');
+
+            const name = nameInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+            const category = categoryInput.value;
+
+            // Conditions
+            if (name === "" || isNaN(amount) || amount <= 0) {
+                alert("Please enter a valid expense description and amount.");
+                return;
+            }
+
+            // Creating expense object
+            const newExpense = {
+                id: Date.now(),
+                name: name,
+                amount: amount,
+                category: category
+            };
+
+            
+            expenses.push(newExpense);
+
+           
+            nameInput.value = '';
+            amountInput.value = '';
+
+            updateSummary();
+        }
+
+       
+        function updateSummary() {
+            // Loop to calculate total expenses
+            let totalExpenses = 0;
+            for (let i = 0; i < expenses.length; i++) {
+                totalExpenses += expenses[i].amount;
+            }
+
+         
+            const netSavings = totalIncome - totalExpenses;
+
+            // Update simple UI text nodes
+            document.getElementById('incomeDisplay').innerText = totalIncome.toFixed(2);
+            document.getElementById('totalIncomeCard').innerText = totalIncome.toFixed(2);
+            document.getElementById('totalExpensesCard').innerText = totalExpenses.toFixed(2);
+            document.getElementById('savingsCardValue').innerText = netSavings.toFixed(2);
+
+            // Update savings card styling based on condition
+            const savingsCard = document.getElementById('savingsCard');
+            if (netSavings >= 0) {
+                savingsCard.className = "card positive";
+            } else {
+                savingsCard.className = "card negative";
+            }
+
+            renderExpenseList();
+            renderCategoryBreakdown();
+        }
+
+       
+        function renderExpenseList() {
+            const listElement = document.getElementById('expenseList');
+            listElement.innerHTML = ''; // Clear previous items
+
+            // Loop through expenses array
+            expenses.forEach(function(expense) {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span><strong>${expense.name}</strong> (${expense.category})</span>
+                    <span>$${expense.amount.toFixed(2)}</span>
+                `;
+                listElement.appendChild(li);
+            });
+        }
+
+       
+        function renderCategoryBreakdown() {
+            const breakdownElement = document.getElementById('categoryBreakdown');
+            breakdownElement.innerHTML = '';
+
+                      const categories = { Food: 0, Rent: 0, Utilities: 0, Entertainment: 0, Other: 0 };
+
+           
+            for (let i = 0; i < expenses.length; i++) {
+                const cat = expenses[i].category;
+                if (categories[cat] !== undefined) {
+                    categories[cat] += expenses[i].amount;
+                }
+            }
+
+        p
+            for (const key in categories) {
+                if (categories[key] > 0) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span>${key}:</span> <strong>$${categories[key].toFixed(2)}</strong>`;
+                    breakdownElement.appendChild(li);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
